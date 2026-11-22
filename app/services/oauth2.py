@@ -28,7 +28,7 @@ def create_access_token(data : dict, key=SECURE_KEY, algorithm=ALGORITHM):
 def verify_access_token(token : str, credentials_exception):
 
     try:
-        payload = jwt.decode(token, key=SECURE_KEY, algorithm=ALGORITHM)
+        payload = jwt.decode(token, key=SECURE_KEY, algorithms=ALGORITHM)
 
         id : str = payload.get("user_id")
 
@@ -40,6 +40,8 @@ def verify_access_token(token : str, credentials_exception):
     except JWSError:
 
         raise credentials_exception
+
+    return token_data
 
 def get_current_user(token : str = Depends(Oauth_Scheme)):
 

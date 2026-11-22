@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, ForeignKey
 
 from app.database import Base
 
@@ -17,6 +17,8 @@ class Post(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
 
 class User(Base):
 

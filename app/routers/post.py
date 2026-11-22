@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app.models import Post
 from app.schemas.post import CreatePost, PostResponse
+from app.services.oauth2 import get_current_user
 
 
 
@@ -17,8 +18,10 @@ router = APIRouter(prefix="/posts",
     "/",
     response_model=list[PostResponse],
 )
-def get_posts(db: Session = Depends(get_db)):
-    return db.query(Post).order_by(Post.id.desc()).all()
+def get_posts(db: Session = Depends(get_db),
+              current_user : int = Depends(get_current_user)):
+    
+    return db.query(Post).filter(Post.user_id==current_user.id).all()
 
 
 # ---------------- GET SINGLE POST ----------------
@@ -27,9 +30,11 @@ def get_posts(db: Session = Depends(get_db)):
     "/{post_id}",
     response_model=PostResponse,
 )
-def get_post(post_id: int, db: Session = Depends(get_db)):
+def get_post(post_id: int, 
+             current_user : int = Depends(get_current_user),
+             db: Session = Depends(get_db)):
 
-    post = db.query(Post).filter(Post.id == post_id).first()
+    post = db.query(Post).filter(Post.user_id == current_user.id).filter(Post.id==post_id).first()
 
     if post is None:
         raise HTTPException(
@@ -46,11 +51,13 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_post(post: CreatePost, db: Session = Depends(get_db)):
+def create_post(post: CreatePost, db: Session = Depends(get_db),
+                current_user : int = Depends(get_current_user)):
 
-    new_post = Post(**post.model_dump())
+    new_post = Post(user_id=current_user.id, **post.model_dump())
 
     try:
+
         db.add(new_post)
         db.commit()
         db.refresh(new_post)
@@ -65,7 +72,7 @@ def create_post(post: CreatePost, db: Session = Depends(get_db)):
             detail="Could not create the post."
         )
 
-
+    
 # ---------------- UPDATE POST ----------------
 
 @router.put("/{post_id}",
@@ -74,12 +81,13 @@ def create_post(post: CreatePost, db: Session = Depends(get_db)):
 def update_post(
     post_id: int,
     post: CreatePost,
+    current_user : int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
 
     existing_post = db.query(Post).filter(
-        Post.id == post_id
-    ).first()
+        Post.user_id == current_user.id
+    ).filter(Post.id==post_id).first()
 
     if existing_post is None:
         raise HTTPException(
@@ -112,21 +120,22 @@ def update_post(
 @router.delete("/{post_id}",)
 def delete_post(
     post_id: int,
+    current_user : int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
 
-    post = db.query(Post).filter(
-        Post.id == post_id
-    ).first()
+    existing_post = db.query(Post).filter(
+            Post.user_id == current_user.id
+        ).filter(Post.id==post_id).first()
 
-    if post is None:
+    if existing_post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found."
         )
 
     try:
-        db.delete(post)
+        db.delete(existing_post)
         db.commit()
 
         return {

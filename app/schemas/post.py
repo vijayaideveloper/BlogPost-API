@@ -10,6 +10,7 @@ class CreatePost(BaseModel):
     published: bool = True
 
 
+
 class PostResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,3 +19,5 @@ class PostResponse(BaseModel):
     content: str
     published: bool
     created_at: datetime
+
+    user_id : int
