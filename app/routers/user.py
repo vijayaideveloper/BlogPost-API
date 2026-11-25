@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
-from app.schemas import user
+from app import schemas
 from app.utils.secure import hash_password
 
 router = APIRouter(prefix="/user",
                    tags=['User API'])
 
 
-@router.get('/', response_model=list[user.UserResponse])
+@router.get('/', response_model=list[schemas.UserResponse])
 def get_users(db : Session = Depends(get_db)):
 
     all_users = db.query(User).all()
@@ -24,7 +24,7 @@ def get_users(db : Session = Depends(get_db)):
 
 
 
-@router.get('/{id}', response_model=user.UserResponse)
+@router.get('/{id}', response_model=schemas.UserResponse)
 def get_user(id : int,
              db : Session = Depends(get_db)):
     
@@ -37,7 +37,7 @@ def get_user(id : int,
     return existing_user
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
-def create_user(user_data : user.UserBase,
+def create_user(user_data : schemas.UserBase,
                 db : Session = Depends(get_db)):
     
     hashed_password = hash_password(user_data.password)
@@ -57,9 +57,9 @@ def create_user(user_data : user.UserBase,
     }
 
 
-@router.put('/{id}', response_model=user.UserResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.put('/{id}', response_model=schemas.UserResponse, status_code=status.HTTP_202_ACCEPTED)
 def update_user(id : int,
-                user_data : user.UserBase,
+                user_data : schemas.UserBase,
                 db : Session = Depends(get_db)):
     
     existing_user = db.query(User).filter(User.id == id).first()

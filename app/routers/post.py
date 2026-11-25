@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app.models import Post
-from app.schemas.post import CreatePost, PostResponse
+from app import schemas
 from app.services.oauth2 import get_current_user
 
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/posts",
 
 @router.get(
     "/",
-    response_model=list[PostResponse],
+    response_model=list[schemas.PostResponse],
 )
 def get_posts(db: Session = Depends(get_db),
               current_user : int = Depends(get_current_user)):
@@ -28,7 +28,7 @@ def get_posts(db: Session = Depends(get_db),
 
 @router.get(
     "/{post_id}",
-    response_model=PostResponse,
+    response_model=schemas.PostResponse,
 )
 def get_post(post_id: int, 
              current_user : int = Depends(get_current_user),
@@ -48,10 +48,10 @@ def get_post(post_id: int,
 # ---------------- CREATE POST ----------------
 
 @router.post("/",
-    response_model=PostResponse,
+    response_model=schemas.PostResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_post(post: CreatePost, db: Session = Depends(get_db),
+def create_post(post: schemas.PostBase, db: Session = Depends(get_db),
                 current_user : int = Depends(get_current_user)):
 
     new_post = Post(user_id=current_user.id, **post.model_dump())
@@ -76,11 +76,11 @@ def create_post(post: CreatePost, db: Session = Depends(get_db),
 # ---------------- UPDATE POST ----------------
 
 @router.put("/{post_id}",
-            response_model=PostResponse
+            response_model=schemas.PostResponse
 )
 def update_post(
     post_id: int,
-    post: CreatePost,
+    post: schemas.PostBase,
     current_user : int = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
